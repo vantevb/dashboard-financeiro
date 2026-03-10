@@ -1,24 +1,28 @@
-const transacoes = [
-  { descricao: "Salário", tipo: "receita", valor: 3500 },
-  { descricao: "Aluguel", tipo: "despesa", valor: 1200 },
-  { descricao: "Freelance", tipo: "receita", valor: 800 },
-  { descricao: "Internet", tipo: "despesa", valor: 120 }
-];
+const formTransacao = document.getElementById("form-transacao");
+const descricaoInput = document.getElementById("descricao");
+const valorInput = document.getElementById("valor");
+const tipoInput = document.getElementById("tipo");
 
 const totalReceitasElemento = document.getElementById("total-receitas");
 const totalDespesasElemento = document.getElementById("total-despesas");
 const saldoTotalElemento = document.getElementById("saldo-total");
 const listaTransacoesElemento = document.getElementById("lista-transacoes");
-const formTransacao = document.getElementById("form-transacao");
-const descricaoInput = document.getElementById("descricao");
-const valorInput = document.getElementById("valor");
-const tipoInput = document.getElementById("tipo");
+
+let transacoes = JSON.parse(localStorage.getItem("transacoes")) || [
+  { id: 1, descricao: "Salário", tipo: "receita", valor: 3500 },
+  { id: 2, descricao: "Aluguel", tipo: "despesa", valor: 1200 },
+  { id: 3, descricao: "Freelance", tipo: "receita", valor: 900 }
+];
 
 function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
   });
+}
+
+function salvarTransacoes() {
+  localStorage.setItem("transacoes", JSON.stringify(transacoes));
 }
 
 function calcularTotais() {
@@ -58,23 +62,35 @@ function renderizarTransacoes() {
     colunaValor.textContent = formatarMoeda(transacao.valor);
 
     if (transacao.tipo === "receita") {
-      colunaTipo.classList.add("receita-texto");
-      colunaValor.classList.add("receita-texto");
+      colunaTipo.classList.add("tipo-receita");
+      colunaValor.classList.add("valor-receita");
     } else {
-      colunaTipo.classList.add("despesa-texto");
-      colunaValor.classList.add("despesa-texto");
+      colunaTipo.classList.add("tipo-despesa");
+      colunaValor.classList.add("valor-despesa");
     }
+
+    const colunaAcao = document.createElement("td");
+    const botaoRemover = document.createElement("button");
+
+    botaoRemover.textContent = "Remover";
+    botaoRemover.classList.add("btn-remover");
+    botaoRemover.addEventListener("click", function () {
+      removerTransacao(transacao.id);
+    });
+
+    colunaAcao.appendChild(botaoRemover);
 
     linha.appendChild(colunaDescricao);
     linha.appendChild(colunaTipo);
     linha.appendChild(colunaValor);
+    linha.appendChild(colunaAcao);
 
     listaTransacoesElemento.appendChild(linha);
   }
 }
 
-function adicionarTransacao(evento) {
-  evento.preventDefault();
+function adicionarTransacao(event) {
+  event.preventDefault();
 
   const descricao = descricaoInput.value.trim();
   const valor = Number(valorInput.value);
@@ -86,6 +102,7 @@ function adicionarTransacao(evento) {
   }
 
   const novaTransacao = {
+    id: Date.now(),
     descricao: descricao,
     tipo: tipo,
     valor: valor
@@ -93,10 +110,20 @@ function adicionarTransacao(evento) {
 
   transacoes.push(novaTransacao);
 
+  salvarTransacoes();
   renderizarTransacoes();
   calcularTotais();
-
   formTransacao.reset();
+}
+
+function removerTransacao(id) {
+  transacoes = transacoes.filter(function (transacao) {
+    return transacao.id !== id;
+  });
+
+  salvarTransacoes();
+  renderizarTransacoes();
+  calcularTotais();
 }
 
 formTransacao.addEventListener("submit", adicionarTransacao);
